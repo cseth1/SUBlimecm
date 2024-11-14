@@ -1,0 +1,183 @@
+enum UserStatus {
+    INVITED
+    VERIFIED
+}
+
+model User {
+    id              String      @id @default(uuid())
+    name            String?
+    email           String?     @unique
+    pictureUrl      String?     @default('https://i.imgur.com/ZdJSK3Y.jpeg')
+    tokenInvitation String?
+
+    status          UserStatus  @default(VERIFIED)
+
+    // this is the role of the user for the application
+    globalRole      String      @default('USER')
+    password        String?     @password @omit
+    createdAt       DateTime    @default(now())
+    updatedAt       DateTime    @updatedAt @default(now())
+
+    employees       Employee[]  @relation("user")
+    timeEntrys      TimeEntry[] @relation("user")
+
+    @@auth()
+    @@allow("all", auth().id == this.id)
+    @@allow('all', auth().globalRole == 'ADMIN')
+
+    //we only allow that user to register if they don't create an admin role
+    @@allow("create", globalRole != 'ADMIN')
+    @@allow("read", true)
+}
+
+model Project {
+
+    id          String      @id @default(uuid())
+    name        String
+    description String?
+    startDate   String?
+    endDate     String?
+    status      String?
+    clientName  String?
+
+    timeEntrys  TimeEntry[] @relation("project")
+    documents   Document[]  @relation("project")
+    bids        Bid[]       @relation("project")
+    schedules   Schedule[]  @relation("project")
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Employee {
+
+    id               String          @id @default(uuid())
+    position         String?
+    phone            String?
+    emergencyContact String?
+    hireDate         String?
+    department       String?
+
+    userId           String
+    user             User?           @relation(fields: [userId], references: [id], name: "user")
+
+    schedules        Schedule[]      @relation("employee")
+    certifications   Certification[] @relation("employee")
+    createdAt        DateTime        @default(now())
+    updatedAt        DateTime        @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model TimeEntry {
+
+    id          String   @id @default(uuid())
+    clockIn     String
+    clockOut    String?
+    gpsLocation String?
+    photoUrl    String?
+    status      String?
+
+    userId      String
+    user        User?    @relation(fields: [userId], references: [id], name: "user")
+    projectId   String
+    project     Project? @relation(fields: [projectId], references: [id], name: "project")
+
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Document {
+
+    id        String   @id @default(uuid())
+    name      String
+    type      String?
+    fileUrl   String?
+    category  String?
+
+    projectId String
+    project   Project? @relation(fields: [projectId], references: [id], name: "project")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Bid {
+
+    id          String   @id @default(uuid())
+    title       String?
+    amount      String?
+    dueDate     String?
+    status      String?
+    description String?
+
+    projectId   String
+    project     Project? @relation(fields: [projectId], references: [id], name: "project")
+
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Schedule {
+
+    id         String    @id @default(uuid())
+    startTime  String
+    endTime    String?
+    type       String?
+
+    employeeId String
+    employee   Employee? @relation(fields: [employeeId], references: [id], name: "employee")
+    projectId  String
+    project    Project?  @relation(fields: [projectId], references: [id], name: "project")
+
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Certification {
+
+    id         String    @id @default(uuid())
+    name       String
+    issueDate  String?
+    expiryDate String?
+    status     String?
+
+    employeeId String
+    employee   Employee? @relation(fields: [employeeId], references: [id], name: "employee")
+
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Demo {
+
+    id            String   @id @default(uuid())
+    name          String
+    email         String
+    company       String?
+    phone         String?
+    preferredDate String?
+    interests     String?
+    status        String?
+
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Newsletter {
+
+    id               String   @id @default(uuid())
+    email            String
+    status           String?
+    subscriptionDate String
+
+    createdAt        DateTime @default(now())
+    updatedAt        DateTime @updatedAt @default(now())
+    @@allow("all", true)
+}
+
